@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "storageAccounts_blobstoragene_name": {
-            "value": null
+            "value": "blobstoregeneu3"
         }
     }
 }

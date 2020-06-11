@@ -1,0 +1,128 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+
+namespace blobconnector
+{
+    class Program
+    {
+        static async Task Main(string[] args)
+        {
+           await Program.getUserInput();
+        }
+        static BlobServiceClient createBlobserviceCliet()
+        {
+            var builder = new ConfigurationBuilder()
+                                  .SetBasePath(Directory.GetCurrentDirectory())
+                                  .AddJsonFile("appsettings.json");
+
+            var configuration = builder.Build();
+            string connectionString = configuration["connectionstring"];
+            // Create a BlobServiceClient object which will be used to create a container client
+
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+            return blobServiceClient;
+        }
+        static async Task getUserInput()
+        {
+            Console.WriteLine("Please select operation.\n Press 1 to upload file \n Press 2 to download file \n Press other digit to exit");
+
+            var UserInput = Console.ReadKey();
+            if (char.IsDigit(UserInput.KeyChar))
+            {
+                if (int.Parse(UserInput.KeyChar.ToString()) == 1)
+                {
+                   await Program.uploadFile();
+                }
+                else if (int.Parse(UserInput.KeyChar.ToString()) == 2)
+                {
+                   await Program.downloadFile();
+                }
+            }
+
+        }
+        static async Task uploadFile()
+        {
+            BlobServiceClient blobServiceClient = Program.createBlobserviceCliet();
+            Console.WriteLine("\nPlease provide local file path");
+            string filePath = Console.ReadLine();
+            //string fileName = "E:/AAF/.net projects/input.txt";
+
+            Console.WriteLine("Please provide container name where you want to upload file");
+            string containerName = Console.ReadLine();
+            // Create the container and return a container client object
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            string fileName = Path.GetFileName(filePath);
+            // Get a reference to a blob
+            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}\n", blobClient.Uri);
+
+            // Open the file and upload its data
+            using FileStream uploadFileStream = File.OpenRead(filePath);
+            try
+            {
+                await blobClient.UploadAsync(uploadFileStream, true);
+                    uploadFileStream.Close();
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+
+            Console.WriteLine("Press c to continue or other key to exit");
+            char useriput = Console.ReadLine()[0];
+            if (useriput == 'c')
+            {
+               await Program.getUserInput();
+            }
+        }
+        static async Task downloadFile()
+        {
+
+            BlobServiceClient blobServiceClient = Program.createBlobserviceCliet();
+            Console.WriteLine("\nPlease provide container name from where you want to download file");
+            string containerName = Console.ReadLine();
+            // Create the container and return a container client object
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            Console.WriteLine("Please provide file name to download");
+
+            string fileName = Console.ReadLine();
+            // Get a reference to a blob
+            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            Console.WriteLine("Please provide folder path to dowanlod file");
+            string downloadFilePath = Console.ReadLine() + "/" + fileName;
+
+
+            Console.WriteLine("\nDownloading blob to\n\t{0}\n", downloadFilePath);
+
+            // Download the blob's contents and save it to a file
+            BlobDownloadInfo download = await blobClient.DownloadAsync();
+
+            using (FileStream downloadFileStream = File.OpenWrite(downloadFilePath))
+            {
+                await Task.Run(() => {
+                    download.Content.CopyToAsync(downloadFileStream);
+                    downloadFileStream.Close();
+                });
+            }
+            Console.WriteLine("Press c to continue or other key to exit");
+            char useriput = Console.ReadLine()[0];
+            if (useriput == 'c')
+            {
+               await Program.getUserInput();
+            }
+        }
+    }
+}
+
+

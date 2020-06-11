@@ -125,4 +125,4 @@ namespace blobconnector
     }
 }
 
-
+DefaultEndpointsProtocol=https;AccountName=blobstoragene;AccountKey=aot+VckVqPl4XUxPCqhAjX7XdhSLWb4f+oEiyKLzMzXPEL5J+OUDiN0V0SnaH9ocv7Br0ySKjfLNlivF9uUFpQ==;EndpointSuffix=core.windows.net
